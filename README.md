@@ -1,3 +1,3 @@
-# spring-boot-starter-shiro-sentinel
+# shiro-sentinel-spring-boot-starter
 
 Spring Boot Starter For Shiro With Sentinel
