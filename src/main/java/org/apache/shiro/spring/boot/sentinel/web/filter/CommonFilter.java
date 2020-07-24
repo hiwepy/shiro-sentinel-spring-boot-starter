@@ -44,7 +44,6 @@ import com.alibaba.csp.sentinel.util.StringUtil;
 /**
  * Access Control Filter that integrates with Sentinel.
  * @author 		： <a href="https://github.com/hiwepy">hiwepy</a>
- * @see {@link com.alibaba.csp.sentinel.adapter.servlet.CommonFilter}
  */
 public class CommonFilter extends AccessControlFilter {
 
