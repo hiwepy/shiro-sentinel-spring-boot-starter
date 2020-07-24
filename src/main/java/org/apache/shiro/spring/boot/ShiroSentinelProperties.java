@@ -31,7 +31,11 @@ public class ShiroSentinelProperties{
 	public static final String PREFIX = "shiro.sentinel";
 
 	private boolean enabled = false;
-	
+
+    private boolean httpMethodSpecify = false;
+    
+    private boolean webContextUnify = true;
+    
 	private List<AuthorityRule> authorityRules = new ArrayList<>();
 	
 	private List<FlowRule> flowRules = new ArrayList<>();
@@ -44,6 +48,22 @@ public class ShiroSentinelProperties{
 
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+	}
+
+	public boolean isHttpMethodSpecify() {
+		return httpMethodSpecify;
+	}
+
+	public void setHttpMethodSpecify(boolean httpMethodSpecify) {
+		this.httpMethodSpecify = httpMethodSpecify;
+	}
+
+	public boolean isWebContextUnify() {
+		return webContextUnify;
+	}
+
+	public void setWebContextUnify(boolean webContextUnify) {
+		this.webContextUnify = webContextUnify;
 	}
 
 	public List<AuthorityRule> getAuthorityRules() {

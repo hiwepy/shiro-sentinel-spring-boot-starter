@@ -2,8 +2,8 @@ package org.apache.shiro.spring.boot;
 
 import java.util.List;
 
-import org.apache.shiro.spring.boot.sentinel.web.filter.SentinelOriginFilter;
-import org.apache.shiro.spring.boot.sentinel.web.filter.SentinelTotalFilter;
+import org.apache.shiro.spring.boot.sentinel.web.filter.CommonFilter;
+import org.apache.shiro.spring.boot.sentinel.web.filter.CommonTotalFilter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.CollectionUtils;
 
+import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.slots.block.authority.AuthorityRule;
 import com.alibaba.csp.sentinel.slots.block.authority.AuthorityRuleManager;
 import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
@@ -22,23 +23,26 @@ import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
 
 @Configuration
-@ConditionalOnClass(com.alibaba.csp.sentinel.SphU.class)
+@ConditionalOnClass(SphU.class)
 @ConditionalOnProperty(prefix = ShiroSentinelProperties.PREFIX, value = "enabled", havingValue = "true")
 @EnableConfigurationProperties(ShiroSentinelProperties.class)
 public class ShiroSentinelAutoConfiguration implements InitializingBean  {
 	
 	@Bean("origin-sentinel")
-    protected FilterRegistrationBean<SentinelOriginFilter> commonFilter() throws Exception {
-        FilterRegistrationBean<SentinelOriginFilter> registration = new FilterRegistrationBean<SentinelOriginFilter>();
-        registration.setFilter(new SentinelOriginFilter());
+    protected FilterRegistrationBean<CommonFilter> commonFilter(ShiroSentinelProperties properties) throws Exception {
+        FilterRegistrationBean<CommonFilter> registration = new FilterRegistrationBean<CommonFilter>();
+        CommonFilter commonFilter = new CommonFilter();
+        commonFilter.setHttpMethodSpecify(properties.isHttpMethodSpecify());
+        commonFilter.setWebContextUnify(properties.isWebContextUnify());
+        registration.setFilter(commonFilter);
         registration.setEnabled(false); 
         return registration;
     }
 	
 	@Bean("total-sentinel")
-    protected FilterRegistrationBean<SentinelTotalFilter> commonTotalFilter() throws Exception {
-        FilterRegistrationBean<SentinelTotalFilter> registration = new FilterRegistrationBean<SentinelTotalFilter>();
-        registration.setFilter(new SentinelTotalFilter());
+    protected FilterRegistrationBean<CommonTotalFilter> commonTotalFilter() throws Exception {
+        FilterRegistrationBean<CommonTotalFilter> registration = new FilterRegistrationBean<CommonTotalFilter>();
+        registration.setFilter(new CommonTotalFilter());
 	    registration.setEnabled(false); 
 	    return registration;
     }
