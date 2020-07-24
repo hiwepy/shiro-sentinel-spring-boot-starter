@@ -15,7 +15,14 @@
  */
 package org.apache.shiro.spring.boot;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import com.alibaba.csp.sentinel.slots.block.authority.AuthorityRule;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 
 
 @ConfigurationProperties(ShiroSentinelProperties.PREFIX)
@@ -24,6 +31,12 @@ public class ShiroSentinelProperties{
 	public static final String PREFIX = "shiro.sentinel";
 
 	private boolean enabled = false;
+	
+	private List<AuthorityRule> authorityRules = new ArrayList<>();
+	
+	private List<FlowRule> flowRules = new ArrayList<>();
+	
+	private List<DegradeRule> degradeRules = new ArrayList<>();
 
 	public boolean isEnabled() {
 		return enabled;
@@ -31,6 +44,30 @@ public class ShiroSentinelProperties{
 
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+	}
+
+	public List<AuthorityRule> getAuthorityRules() {
+		return authorityRules;
+	}
+
+	public void setAuthorityRules(List<AuthorityRule> authorityRules) {
+		this.authorityRules = authorityRules;
+	}
+
+	public List<FlowRule> getFlowRules() {
+		return flowRules;
+	}
+
+	public void setFlowRules(List<FlowRule> flowRules) {
+		this.flowRules = flowRules;
+	}
+
+	public List<DegradeRule> getDegradeRules() {
+		return degradeRules;
+	}
+
+	public void setDegradeRules(List<DegradeRule> degradeRules) {
+		this.degradeRules = degradeRules;
 	}
 	
 }
