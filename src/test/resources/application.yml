@@ -1,5 +1,7 @@
 shiro:
-  csrfguard:
-    enabled: true
-    protect-enabled: true
+  sentinel:    enabled: true
+    authority-rules:    - strategy: 0
+      limit-app: xxx
+      resource: sss
+    degrade-rules:    - resource: 
   

@@ -15,7 +15,14 @@
  */
 package org.apache.shiro.spring.boot;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import com.alibaba.csp.sentinel.slots.block.authority.AuthorityRule;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 
 
 @ConfigurationProperties(ShiroSentinelProperties.PREFIX)
@@ -25,12 +32,62 @@ public class ShiroSentinelProperties{
 
 	private boolean enabled = false;
 
+    private boolean httpMethodSpecify = false;
+    
+    private boolean webContextUnify = true;
+    
+	private List<AuthorityRule> authorityRules = new ArrayList<>();
+	
+	private List<FlowRule> flowRules = new ArrayList<>();
+	
+	private List<DegradeRule> degradeRules = new ArrayList<>();
+
 	public boolean isEnabled() {
 		return enabled;
 	}
 
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+	}
+
+	public boolean isHttpMethodSpecify() {
+		return httpMethodSpecify;
+	}
+
+	public void setHttpMethodSpecify(boolean httpMethodSpecify) {
+		this.httpMethodSpecify = httpMethodSpecify;
+	}
+
+	public boolean isWebContextUnify() {
+		return webContextUnify;
+	}
+
+	public void setWebContextUnify(boolean webContextUnify) {
+		this.webContextUnify = webContextUnify;
+	}
+
+	public List<AuthorityRule> getAuthorityRules() {
+		return authorityRules;
+	}
+
+	public void setAuthorityRules(List<AuthorityRule> authorityRules) {
+		this.authorityRules = authorityRules;
+	}
+
+	public List<FlowRule> getFlowRules() {
+		return flowRules;
+	}
+
+	public void setFlowRules(List<FlowRule> flowRules) {
+		this.flowRules = flowRules;
+	}
+
+	public List<DegradeRule> getDegradeRules() {
+		return degradeRules;
+	}
+
+	public void setDegradeRules(List<DegradeRule> degradeRules) {
+		this.degradeRules = degradeRules;
 	}
 	
 }

@@ -28,14 +28,16 @@ import org.apache.shiro.biz.utils.WebUtils;
 import org.apache.shiro.web.filter.AccessControlFilter;
 
 import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.ResourceTypeConstants;
 import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.Tracer;
 import com.alibaba.csp.sentinel.adapter.servlet.callback.WebCallbackManager;
-import com.alibaba.csp.sentinel.adapter.servlet.util.FilterUtil;
+import com.alibaba.csp.sentinel.adapter.servlet.config.WebServletConfig;
 import com.alibaba.csp.sentinel.context.ContextUtil;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 
 /**                
+ * Access Control Filter for all requests.
  * @author 		： <a href="https://github.com/hiwepy">hiwepy</a>
  */
 public class CommonTotalFilter extends AccessControlFilter {
@@ -47,33 +49,24 @@ public class CommonTotalFilter extends AccessControlFilter {
 			throws ServletException, IOException {
 		
 		HttpServletRequest sRequest = WebUtils.toHttp(request);
-        String target = FilterUtil.filterTarget(sRequest);
-        target = WebCallbackManager.getUrlCleaner().clean(target);
 
         Entry entry = null;
         try {
-            ContextUtil.enter(target);
-            entry = SphU.entry(TOTAL_URL_REQUEST);
-            super.doFilterInternal(request, response, chain);
+            ContextUtil.enter(WebServletConfig.WEB_SERVLET_CONTEXT_NAME);
+            entry = SphU.entry(TOTAL_URL_REQUEST, ResourceTypeConstants.COMMON_WEB);
+            chain.doFilter(request, response);
         } catch (BlockException e) {
             HttpServletResponse sResponse = (HttpServletResponse)response;
-            WebCallbackManager.getUrlBlockHandler().blocked(sRequest, sResponse);
-        } catch (IOException e2) {
+            WebCallbackManager.getUrlBlockHandler().blocked(sRequest, sResponse, e);
+        } catch (IOException | ServletException | RuntimeException e2) {
             Tracer.trace(e2);
             throw e2;
-        } catch (ServletException e3) {
-            Tracer.trace(e3);
-            throw e3;
-        } catch (RuntimeException e4) {
-            Tracer.trace(e4);
-            throw e4;
         } finally {
             if (entry != null) {
                 entry.exit();
             }
             ContextUtil.exit();
         }
-		
 		
 	}
 	

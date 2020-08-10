@@ -24,37 +24,58 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.shiro.biz.utils.WebUtils;
 import org.apache.shiro.web.filter.AccessControlFilter;
 
 import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.EntryType;
+import com.alibaba.csp.sentinel.ResourceTypeConstants;
 import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.Tracer;
 import com.alibaba.csp.sentinel.adapter.servlet.callback.RequestOriginParser;
 import com.alibaba.csp.sentinel.adapter.servlet.callback.UrlCleaner;
 import com.alibaba.csp.sentinel.adapter.servlet.callback.WebCallbackManager;
+import com.alibaba.csp.sentinel.adapter.servlet.config.WebServletConfig;
 import com.alibaba.csp.sentinel.adapter.servlet.util.FilterUtil;
 import com.alibaba.csp.sentinel.context.ContextUtil;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.util.StringUtil;
 
 /**
- * TODO
+ * Access Control Filter that integrates with Sentinel.
  * @author 		： <a href="https://github.com/hiwepy">hiwepy</a>
+ * @see {@link com.alibaba.csp.sentinel.adapter.servlet.CommonFilter}
  */
 public class CommonFilter extends AccessControlFilter {
 
-	private static final String EMPTY_ORIGIN = "";
+	 /**
+     * Specify whether the URL resource name should contain the HTTP method prefix (e.g. {@code POST:}).
+     */
+    public static final String HTTP_METHOD_SPECIFY = "HTTP_METHOD_SPECIFY";
+    /**
+     * If enabled, use the default context name, or else use the URL path as the context name,
+     * {@link WebServletConfig#WEB_SERVLET_CONTEXT_NAME}. Please pay attention to the number of context (EntranceNode),
+     * which may affect the memory footprint.
+     *
+     * @since 1.7.0
+     */
+    public static final String WEB_CONTEXT_UNIFY = "WEB_CONTEXT_UNIFY";
+
+    private final static String COLON = ":";
+    
+    private static final String EMPTY_ORIGIN = "";
+
+    private boolean httpMethodSpecify = false;
+    private boolean webContextUnify = true;
 	
 	@Override
 	public void doFilterInternal(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws ServletException, IOException {
 		
-		HttpServletRequest sRequest = (HttpServletRequest)request;
-        Entry entry = null;
+		HttpServletRequest sRequest = WebUtils.toHttp(request);
+        Entry urlEntry = null;
 
         try {
-        	
             String target = FilterUtil.filterTarget(sRequest);
             // Clean and unify the URL.
             // For REST APIs, you have to clean the URL (e.g. `/foo/1` and `/foo/2` -> `/foo/:id`), or
@@ -63,49 +84,52 @@ public class CommonFilter extends AccessControlFilter {
             if (urlCleaner != null) {
                 target = urlCleaner.clean(target);
             }
-            
-            // Parse the request origin using registered origin parser.
-            String origin = parseOrigin(sRequest);
 
-            ContextUtil.enter(target, origin);
-            entry = SphU.entry(target, EntryType.IN);
+            // If you intend to exclude some URLs, you can convert the URLs to the empty string ""
+            // in the UrlCleaner implementation.
+            if (!StringUtil.isEmpty(target)) {
+                // Parse the request origin using registered origin parser.
+                String origin = parseOrigin(sRequest);
+                String contextName = webContextUnify ? WebServletConfig.WEB_SERVLET_CONTEXT_NAME : target;
+                ContextUtil.enter(contextName, origin);
 
-    		super.doFilterInternal(request, response, chain);
-    		
+                if (httpMethodSpecify) {
+                    // Add HTTP method prefix if necessary.
+                    String pathWithHttpMethod = sRequest.getMethod().toUpperCase() + COLON + target;
+                    urlEntry = SphU.entry(pathWithHttpMethod, ResourceTypeConstants.COMMON_WEB, EntryType.IN);
+                } else {
+                    urlEntry = SphU.entry(target, ResourceTypeConstants.COMMON_WEB, EntryType.IN);
+                }
+            }
+            chain.doFilter(request, response);
         } catch (BlockException e) {
-            HttpServletResponse sResponse = (HttpServletResponse)response;
+            HttpServletResponse sResponse = (HttpServletResponse) response;
             // Return the block page, or redirect to another URL.
-            WebCallbackManager.getUrlBlockHandler().blocked(sRequest, sResponse);
-        } catch (IOException e2) {
-            Tracer.trace(e2);
+            WebCallbackManager.getUrlBlockHandler().blocked(sRequest, sResponse, e);
+        } catch (IOException | ServletException | RuntimeException e2) {
+            Tracer.traceEntry(e2, urlEntry);
             throw e2;
-        } catch (ServletException e3) {
-            Tracer.trace(e3);
-            throw e3;
-        } catch (RuntimeException e4) {
-            Tracer.trace(e4);
-            throw e4;
         } finally {
-            if (entry != null) {
-                entry.exit();
+            if (urlEntry != null) {
+                urlEntry.exit();
             }
             ContextUtil.exit();
         }
 		
 	}
-	
-	private String parseOrigin(HttpServletRequest request) {
-	        RequestOriginParser originParser = WebCallbackManager.getRequestOriginParser();
-	        String origin = EMPTY_ORIGIN;
-	        if (originParser != null) {
-	            origin = originParser.parseOrigin(request);
-	            if (StringUtil.isEmpty(origin)) {
-	                return EMPTY_ORIGIN;
-	            }
-	        }
-	        return origin;
-	    }
-	 
+
+    private String parseOrigin(HttpServletRequest request) {
+        RequestOriginParser originParser = WebCallbackManager.getRequestOriginParser();
+        String origin = EMPTY_ORIGIN;
+        if (originParser != null) {
+            origin = originParser.parseOrigin(request);
+            if (StringUtil.isEmpty(origin)) {
+                return EMPTY_ORIGIN;
+            }
+        }
+        return origin;
+    }
+    
 	@Override
 	protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue)
 			throws Exception {
@@ -115,6 +139,22 @@ public class CommonFilter extends AccessControlFilter {
 	@Override
 	protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
 		return true;
+	}
+
+	public boolean isHttpMethodSpecify() {
+		return httpMethodSpecify;
+	}
+
+	public void setHttpMethodSpecify(boolean httpMethodSpecify) {
+		this.httpMethodSpecify = httpMethodSpecify;
+	}
+
+	public boolean isWebContextUnify() {
+		return webContextUnify;
+	}
+
+	public void setWebContextUnify(boolean webContextUnify) {
+		this.webContextUnify = webContextUnify;
 	}
 	
 }
