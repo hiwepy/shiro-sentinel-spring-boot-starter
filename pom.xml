@@ -371,9 +371,9 @@
         <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
 		<maven-nexus-staging-plugin.version>1.6.8</maven-nexus-staging-plugin.version>
-		<sentinel.version>1.7.2</sentinel.version>
-		<shiro.version>1.5.3</shiro.version>
-		<shiro-biz.version>1.1.0.1.RELEASE</shiro-biz.version>
+		<sentinel.version>1.8.1</sentinel.version>
+		<shiro.version>1.7.0</shiro.version>
+		<shiro-biz.version>1.1.5-SNAPSHOT</shiro-biz.version>
 	</properties> 
 
 	<dependencies>
